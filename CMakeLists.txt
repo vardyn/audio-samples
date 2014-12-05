@@ -1,0 +1,7 @@
+cmake_minimum_required (VERSION 3.0 FATAL_ERROR)
+
+project (AUDIO_SAMPLES)
+set(CMAKE_MODULE_PATH ${AUDIO_SAMPLES_SOURCE_DIR}/cmake/modules ${CMAKE_MODULE_PATH})
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${AUDIO_SAMPLES_BINARY_DIR}/bin)
+
+add_subdirectory(src)

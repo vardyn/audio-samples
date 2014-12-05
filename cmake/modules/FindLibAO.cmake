@@ -1,0 +1,17 @@
+find_path(LIBAO_INCLUDE_DIR ao/ao.h)
+find_library(LIBAO_LIBRARY NAMES ao)
+
+if (LIBAO_INCLUDE_DIR AND LIBAO_LIBRARY)
+    set(LIBAO_FOUND true)
+endif (LIBAO_INCLUDE_DIR AND LIBAO_LIBRARY)
+
+if (LIBAO_FOUND)
+    if (NOT LIBAO_FOUND_QUIETLY)
+        message(STATUS "Found libao headers: ${LIBAO_INCLUDE_DIR}")
+        message(STATUS "Found libao: ${LIBAO_LIBRARY}")
+    endif (NOT LIBAO_FOUND_QUIETLY)
+else (LIBAO_FOUND)
+    if (LIBAO_FIND_REQUIRED)
+        message(FATAL_ERROR "Could not find libao")
+    endif (LIBAO_FIND_REQUIRED)
+endif (LIBAO_FOUND)

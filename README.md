@@ -1,7 +1,7 @@
 audio-samples
 =============
 
-Codes for generating audio samples for music or other purposes
+Codes that generate audio samples for music or other purposes.
 
 ## Dependencies
 
@@ -9,6 +9,9 @@ Codes for generating audio samples for music or other purposes
 
 ## Building
 
-Examples can be built using gcc command lines like the following:
+    mkdir build
+    cd build
+    cmake ..
+    make
 
-    gcc -o impulse_wav impulse_wav.c -I/usr/local/include/ -L/usr/local/lib/ -lao 
+Executables will be written into the build/bin directory.
