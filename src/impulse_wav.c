@@ -1,3 +1,5 @@
+#include "AudioSamplesCore.h"
+
 #include <string.h>
 #include <ao/ao.h>
 
@@ -27,21 +29,5 @@ int main(int argc, char **argv)
     ao_close(device);
     ao_shutdown();
     
-    return 0;
-}
-
-int write_wav_sample_24bit(char *sample, int value)
-{
-    sample[0] = value & 0xff;
-    sample[1] = (value >> 8) & 0xff;
-    sample[2] = (value >> 16) & 0xff;
-    
-    return 0;
-}
-
-int write_wav_sample_16bit(char *sample, int value)
-{
-    sample[0] = value & 0xff;
-    sample[1] = (value >> 8) & 0xff;
     return 0;
 }
