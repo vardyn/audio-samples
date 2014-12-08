@@ -1,4 +1,4 @@
-audio-samples
+Audio Samples
 =============
 
 Codes that generate audio samples for music or other purposes.
