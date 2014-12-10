@@ -11,6 +11,7 @@
 #define ASC_WAV24BIT_MAX  8388607
 #define ASC_WAV24BIT_MIN -8388607
 
+/* WAV format helpers */
 int asc_write_wav_sample_16bit(char *sample, int value);
 int asc_write_wav_sample_24bit(char *sample, int value);
 
