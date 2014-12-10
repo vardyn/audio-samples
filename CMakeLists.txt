@@ -1,4 +1,4 @@
-cmake_minimum_required (VERSION 3.0 FATAL_ERROR)
+cmake_minimum_required (VERSION 2.8 FATAL_ERROR)
 
 project (AUDIO_SAMPLES)
 set(CMAKE_MODULE_PATH ${AUDIO_SAMPLES_SOURCE_DIR}/cmake/modules ${CMAKE_MODULE_PATH})
