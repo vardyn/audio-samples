@@ -13,6 +13,9 @@ int main(int argc, char **argv)
     char samples[22050*3];
     double sample;
     
+    asc_simple_logging_init();
+    ASC_INFO("simple kick example");
+    
     ao_initialize();
     driver_id = ao_driver_id("wav");
 
@@ -37,6 +40,8 @@ int main(int argc, char **argv)
     
     ao_close(device);
     ao_shutdown();
+    
+    asc_logging_end();
     
     return 0;
 }
