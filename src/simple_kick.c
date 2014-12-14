@@ -16,6 +16,7 @@ int main(int argc, char **argv)
 
     asc_simple_logging_init();
     ASC_INFO("simple kick example");
+    ASC_INFO("writes simple_kick.wav in the current directory");
 
     ao_initialize();
     driver_id = ao_driver_id("wav");
