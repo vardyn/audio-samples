@@ -14,15 +14,34 @@
 #include "ASCLogging.h"
 #include "ASCSimpleLogging.h"
 
+typedef struct asc_func_s asc_func_t;
+
+struct asc_func_s {
+    double current_value;
+    int current_sample;
+    int sample_rate;
+    void (*function)(asc_func_t *, int);
+    void *state;
+};
+
+/* ASC function helpers */
+asc_func_t *asc_func_new(int);
+double asc_func_eval(asc_func_t *func, int sample);
+void asc_func_free(asc_func_t *);
+
 /* WAV format helpers */
 int asc_write_wav_sample_16bit(char *sample, int value);
 int asc_write_wav_sample_24bit(char *sample, int value);
 
 /* Audio signal generation */
-double asc_envelope_AD(double peak, double attack, double decay,
-                       double attack_slope, double decay_slope,
-                       int sample, int sample_rate);
-double asc_sine(double amplitude, double frequency,
-                double start_phase, int sample, int sample_rate);
+asc_func_t *asc_constant_gen(double constant, int sample,
+                             int sample_rate);
+asc_func_t *asc_envelope_AD_gen(double peak, double attack,
+                                double decay, double attack_slope,
+                                double decay_slope, int sample,
+                                int sample_rate);
+asc_func_t *asc_sine_gen(asc_func_t *amplitude, asc_func_t *frequency,
+                         asc_func_t *phase, int sample,
+                         int sample_rate);
 
 #endif
