@@ -17,8 +17,8 @@ typedef struct asc_envelope_AD_state_s
     double peak;
     double attack;
     double decay;
-    double attack_slope;
-    double decay_slope;
+    double attack_slope_exponent;
+    double decay_slope_exponent;
 } asc_envelope_AD_state_t;
 
 asc_func_t *asc_envelope_AD_gen(double peak, double attack,
@@ -28,6 +28,7 @@ asc_func_t *asc_envelope_AD_gen(double peak, double attack,
 {
     asc_func_t *func;
     asc_envelope_AD_state_t *state;
+    double x_slope, y_slope;
 
     state = (asc_envelope_AD_state_t *)
             malloc(sizeof(asc_envelope_AD_state_t));
@@ -38,10 +39,16 @@ asc_func_t *asc_envelope_AD_gen(double peak, double attack,
     }
 
     state->peak = peak;
+
     state->attack = attack;
+    x_slope = 0.5 - attack_slope*0.25;
+    y_slope = 0.5 + attack_slope*0.25;
+    state->attack_slope_exponent = log(y_slope)/log(x_slope);
+
     state->decay = decay;
-    state->attack_slope = attack_slope;
-    state->decay_slope = decay_slope;
+    x_slope = 0.5 - decay_slope*0.25;
+    y_slope = 0.5 + decay_slope*0.25;
+    state->decay_slope_exponent = log(y_slope)/log(x_slope);
 
     func = asc_func_new(sample_rate);
     if (NULL == func)
@@ -61,36 +68,27 @@ asc_func_t *asc_envelope_AD_gen(double peak, double attack,
 
 void asc_envelope_AD_run(asc_func_t *func, int sample)
 {
-    double time, attack_slope_exponent, decay_slope_exponent, m;
+    double time, segment_time;
     asc_envelope_AD_state_t *state;
 
     state = (asc_envelope_AD_state_t *) func->state;
 
     time = ((double) sample)/func->sample_rate;
 
-    if (time > state->attack + state->decay)
+    if (time >= state->attack + state->decay)
         func->current_value = 0.0;
-    else if (time > state->attack)
-        if (state->decay > 0.0)
-        {
-            decay_slope_exponent = exp(-1.0*state->decay_slope);
-            m = 1.0/pow(state->decay, decay_slope_exponent);
-            func->current_value = state->peak*(1.0 -
-                                               m*pow(time -
-                                                     state->attack,
-                                                     decay_slope_exponent));
-        }
-        else
-            func->current_value = 0.0;
+    else if (time >= state->attack)
+    {
+        segment_time = (time - state->attack)/state->decay;
+        func->current_value = state->peak*(1.0 - pow(segment_time,
+                                                     state->decay_slope_exponent));
+    }
     else if (time >= 0)
         if (state->attack > 0.0)
         {
-            attack_slope_exponent = exp(1.0*state->attack_slope);
-            m = 1.0/pow(state->attack, attack_slope_exponent);
-            func->current_value = state->peak*(1.0 -
-                                               m*pow(state->attack -
-                                                     time,
-                                                     attack_slope_exponent));
+            segment_time = time/state->attack;
+            func->current_value = state->peak*pow(segment_time,
+                                                  state->attack_slope_exponent);
         }
         else
             func->current_value = state->peak;

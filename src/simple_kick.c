@@ -30,7 +30,7 @@ int main(int argc, char **argv)
 
     memset((void *)&samples, 0, 22050*3*sizeof(char));
 
-    envelope = asc_envelope_AD_gen(1.0, 0.001, 0.117, 1.0, -1.0, -1,
+    envelope = asc_envelope_AD_gen(1.0, 0.001, 0.117, 0.0, 0.5, -1,
                                    44100);
     frequency = asc_constant_gen(82.41, -1, 44100);
     phase = asc_constant_gen(0.25*2.0*M_PI, -1, 44100);
