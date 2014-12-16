@@ -87,8 +87,9 @@ void asc_envelope_AD_run(asc_func_t *func, int sample)
         if (state->attack > 0.0)
         {
             segment_time = time/state->attack;
-            func->current_value = state->peak*pow(segment_time,
-                                                  state->attack_slope_exponent);
+            func->current_value = state->peak*(1.0 -
+                                               pow(1.0 - segment_time,
+                                                   state->attack_slope_exponent));
         }
         else
             func->current_value = state->peak;
