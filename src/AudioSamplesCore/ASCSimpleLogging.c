@@ -3,7 +3,9 @@
  * Audio Samples Core Simple Logging implementation
  */
 
+#include "ASCLogging.h"
 #include "ASCSimpleLogging.h"
+
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>

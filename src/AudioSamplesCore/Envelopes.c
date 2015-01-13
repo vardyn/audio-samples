@@ -35,7 +35,7 @@ asc_func_t *asc_envelope_AD_gen(double peak, double attack,
     if (NULL == state)
     {
         ASC_ERROR("out of memory when allocating state");
-        return;
+        return NULL;
     }
 
     state->peak = peak;
@@ -84,6 +84,7 @@ void asc_envelope_AD_run(asc_func_t *func, int sample)
                                                      state->decay_slope_exponent));
     }
     else if (time >= 0)
+    {
         if (state->attack > 0.0)
         {
             segment_time = time/state->attack;
@@ -93,4 +94,5 @@ void asc_envelope_AD_run(asc_func_t *func, int sample)
         }
         else
             func->current_value = state->peak;
+    }
 }
