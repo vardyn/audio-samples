@@ -1,4 +1,5 @@
 #include "AudioSamplesCore.h"
+#include "ASCFiles.h"
 
 #include <ao/ao.h>
 #include <math.h>

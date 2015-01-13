@@ -29,10 +29,6 @@ asc_func_t *asc_func_new(int);
 double asc_func_eval(asc_func_t *func, int sample);
 void asc_func_free(asc_func_t *);
 
-/* WAV format helpers */
-int asc_write_wav_sample_16bit(char *sample, int value);
-int asc_write_wav_sample_24bit(char *sample, int value);
-
 /* Audio signal generation */
 asc_func_t *asc_constant_gen(double constant, int sample,
                              int sample_rate);

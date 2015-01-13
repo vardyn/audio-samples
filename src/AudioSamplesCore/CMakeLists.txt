@@ -1,5 +1,4 @@
-add_library(AudioSamplesCore SHARED AudioSamplesCore.c
-                                    ASCFunctions.c
+add_library(AudioSamplesCore SHARED ASCFunctions.c
                                     ASCLogging.c
                                     ASCSimpleLogging.c
                                     Envelopes.c

@@ -1,9 +1,9 @@
 /*
- * AudioSamplesCore.h
- * Implementation of Audio Samples Core Library
+ * ASCFiles.c
+ * Implementation of Audio Samples Files Library
  */
 
-#include "AudioSamplesCore.h"
+#include "ASCFiles.h"
 
 int asc_write_wav_sample_16bit(char *sample, int value)
 {
