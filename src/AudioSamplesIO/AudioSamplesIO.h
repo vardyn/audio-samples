@@ -1,6 +1,6 @@
 /*
- * ASCFiles.h
- * Header file for Audio Samples Files Library
+ * AudioSamplesIO.h
+ * Header file for Audio Samples IO Library
  */
 
 #ifndef ASC_FILES_H_INCLUDED

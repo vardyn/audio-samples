@@ -1,9 +1,9 @@
 /*
- * ASCFiles.c
- * Implementation of Audio Samples Files Library
+ * AudioSamplesIO.c
+ * Implementation of Audio Samples IO Library
  */
 
-#include "ASCFiles.h"
+#include "AudioSamplesIO.h"
 #include "ASCLogging.h"
 
 #include <stdint.h>
