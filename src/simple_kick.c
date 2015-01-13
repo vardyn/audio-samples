@@ -40,8 +40,8 @@ int main(int argc, char **argv)
     for (i = 0; i < 22050; i++)
     {
         sample = asc_func_eval(sine, i);
-        asc_write_wav_sample_24bit(&samples[i*3],
-                                   (int) (sample*ASC_WAV24BIT_MAX));
+        asio_write_wav_sample_24bit(&samples[i*3],
+                                    (int) (sample*ASC_WAV24BIT_MAX));
     }
 
     ao_play(device, (char *)&samples, 22050*3*sizeof(char));

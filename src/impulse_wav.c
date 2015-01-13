@@ -26,8 +26,8 @@ int main(int argc, char **argv)
     device = ao_open_file(driver_id, "impulse.wav", 1, &format, NULL);
 
     memset((void *)&samples, 0, 45*3*sizeof(char));
-    asc_write_wav_sample_24bit(&samples[0], (1 << 23) - 1);
-    asc_write_wav_sample_24bit(&samples[3], (1 << 23) - 1);
+    asio_write_wav_sample_24bit(&samples[0], (1 << 23) - 1);
+    asio_write_wav_sample_24bit(&samples[3], (1 << 23) - 1);
 
     ao_play(device, (char *)&samples, 45*3*sizeof(char));
 
