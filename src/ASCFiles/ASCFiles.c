@@ -6,7 +6,9 @@
 #include "ASCFiles.h"
 #include "ASCLogging.h"
 
-int asc_write_wav_sample_16bit(unsigned char *sample, int value)
+#include <stdint.h>
+
+int asc_write_wav_sample_16bit(uint8_t *sample, int32_t value)
 {
     if (ASC_WAV16BIT_MAX < value)
     {
@@ -25,7 +27,7 @@ int asc_write_wav_sample_16bit(unsigned char *sample, int value)
     return 0;
 }
 
-int asc_write_wav_sample_24bit(unsigned char *sample, int value)
+int asc_write_wav_sample_24bit(uint8_t *sample, int32_t value)
 {
     if (ASC_WAV24BIT_MAX < value)
     {
