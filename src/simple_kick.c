@@ -11,7 +11,7 @@ int main(int argc, char **argv)
     struct ao_sample_format format;
     int driver_id, i;
     struct ao_device *device;
-    char samples[22050*3];
+    unsigned char samples[22050*3];
     asc_func_t *envelope, *frequency, *phase, *sine;
     double sample;
 

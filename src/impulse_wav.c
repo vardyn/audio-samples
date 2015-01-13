@@ -9,7 +9,7 @@ int main(int argc, char **argv)
     struct ao_sample_format format;
     int driver_id;
     struct ao_device *device;
-    char samples[45*3];
+    unsigned char samples[45*3];
 
     asc_simple_logging_init();
     ASC_INFO("impulse example");
