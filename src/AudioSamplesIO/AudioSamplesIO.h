@@ -8,6 +8,9 @@
 
 #include <stdint.h>
 
+#define ASIO_STATUS_SUCCESS 0
+#define ASIO_STATUS_ERROR   1
+
 #define ASIO_WAV16BIT_MAX  32767
 #define ASIO_WAV16BIT_MIN -32767
 #define ASIO_WAV24BIT_MAX  8388607
