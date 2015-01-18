@@ -4,8 +4,11 @@
  */
 
 #include "ASCLogging.h"
+
+#include <errno.h>
 #include <stdarg.h>
 #include <stdlib.h>
+#include <string.h>
 
 void (*asc_error_func)(const char *, va_list) = NULL;
 void (*asc_warning_func)(const char *, va_list) = NULL;
@@ -73,4 +76,25 @@ void asc_debug(const char *format, ...)
         asc_debug_func(format, args);
         va_end(args);
     }
+}
+
+char *asc_all_strerror_r(int errnum)
+{
+    char *message;
+    size_t size;
+
+    size = 1024;
+    message = (char *) malloc(size);
+    if (NULL == message)
+        return NULL;
+
+    while (ERANGE == strerror_r(errnum, message, size))
+    {
+        size *= 2;
+        message = realloc(message, size);
+        if (NULL == message)
+            return NULL;
+    }
+
+    return message;
 }
