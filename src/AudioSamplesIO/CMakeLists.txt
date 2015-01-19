@@ -1,1 +1,2 @@
-add_library(AudioSamplesIO SHARED AudioSamplesIO.c)
+add_library(AudioSamplesIO SHARED AudioSamplesIO.c
+                                  ASIORiff.c)

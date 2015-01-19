@@ -9,8 +9,8 @@
 #define ASC_ERROR(format, ...) asc_error("%s: " format, __func__, ##\
                                          __VA_ARGS__)
 
-#define ASC_WARNING(format, ...) asc_warning("%s: " format, __func__,\
-                                             ## __VA_ARGS__)
+#define ASC_WARNING(format, ...) asc_warning("%s: " format, __func__, ##\
+                                             __VA_ARGS__)
 
 #define ASC_INFO(format, ...) asc_info("%s: " format, __func__, ##\
                                        __VA_ARGS__)
@@ -37,5 +37,7 @@ void asc_info(const char *, ...)
 
 void asc_debug(const char *, ...)
     __attribute__((format(printf, 1, 2)));
+
+char *asc_all_strerror_r(int errnum);
 
 #endif
