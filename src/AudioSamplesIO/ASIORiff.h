@@ -10,7 +10,6 @@
 
 #define ASIO_FOURCC_NULL 0x20202020
 #define ASIO_FOURCC_RIFF 0x46464952
-#define ASIO_FOURCC_WAVE 0x45564157
 
 extern const char asio_fourcc_byte_to_ascii[];
 
