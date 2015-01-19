@@ -314,7 +314,7 @@ int asio_riff_file_write(asio_riff_file_t *file, const char *filename)
 
         goto error_close_file;
     }
-    ASC_DEBUG("wrote %u bytes in %d chunks", chunk_size_written,
+    ASC_DEBUG("wrote %zu bytes in %d chunks", chunk_size_written,
               file->chunk_count);
 
     if (EOF == fclose(output_file))
