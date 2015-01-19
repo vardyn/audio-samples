@@ -60,6 +60,7 @@ void asio_riff_chunks_node_free(asio_riff_chunks_node_t *);
 asio_riff_chunk_t **asio_riff_chunks_init(uint32_t chunk_count);
 void asio_riff_chunks_free(asio_riff_file_t *file);
 size_t asio_riff_file_chunks_read(asio_riff_file_t *, FILE *);
+size_t asio_riff_file_chunks_write(asio_riff_file_t *, FILE *);
 
 asio_riff_file_t *asio_riff_file_init()
 {
@@ -231,6 +232,121 @@ error:
     return ASIO_STATUS_ERROR;
 }
 
+int asio_riff_file_write(asio_riff_file_t *file, const char *filename)
+{
+    FILE *output_file;
+    char *error_message;
+    const uint32_t riff_magic = ASIO_FOURCC_RIFF;
+    size_t chunk_size_written;
+
+    if (NULL == file)
+    {
+        ASC_ERROR("file must not be null");
+        goto error;
+    }
+
+    output_file = fopen(filename, "wb");
+
+    if (NULL == output_file)
+    {
+        error_message = asc_all_strerror_r(errno);
+        if (NULL != error_message)
+        {
+            ASC_ERROR("failed to open file: %s", error_message);
+            free(error_message);
+        }
+        else
+            ASC_ERROR("failed to open file");
+
+        goto error;
+    }
+
+    if (1 != fwrite(&riff_magic, sizeof(riff_magic), 1, output_file))
+    {
+        error_message = asc_all_strerror_r(errno);
+        if (NULL != error_message)
+        {
+            ASC_ERROR("failed to write RIFF magic value: %s", error_message);
+            free(error_message);
+        }
+        else
+            ASC_ERROR("failed to write RIFF magic value");
+
+        goto error_close_file;
+    }
+    ASC_DEBUG("wrote RIFF magic value");
+
+    if (1 != fwrite(&file->file_size, sizeof(file->file_size), 1, output_file))
+    {
+        error_message = asc_all_strerror_r(errno);
+        if (NULL != error_message)
+        {
+            ASC_ERROR("failed to write file size value: %s", error_message);
+            free(error_message);
+        }
+        else
+            ASC_ERROR("failed to write file size value");
+
+        goto error_close_file;
+    }
+    ASC_DEBUG("wrote file size value %u", file->file_size);
+
+    if (1 != fwrite(&file->file_type, sizeof(file->file_type), 1, output_file))
+    {
+        error_message = asc_all_strerror_r(errno);
+        if (NULL != error_message)
+        {
+            ASC_ERROR("failed to write file type value: %s", error_message);
+            free(error_message);
+        }
+        else
+            ASC_ERROR("failed to write file type value");
+
+        goto error_close_file;
+    }
+    ASC_DEBUG("wrote file type value %#010x", file->file_type);
+
+    chunk_size_written = asio_riff_file_chunks_write(file, output_file);
+    if ((file->file_size - sizeof(file->file_type)) != chunk_size_written)
+    {
+        ASC_ERROR("failed to write all chunks: %zu bytes written",
+                  chunk_size_written);
+
+        goto error_close_file;
+    }
+    ASC_DEBUG("wrote %u bytes in %d chunks", chunk_size_written,
+              file->chunk_count);
+
+    if (EOF == fclose(output_file))
+    {
+        error_message = asc_all_strerror_r(errno);
+        if (NULL != error_message)
+        {
+            ASC_WARNING("failed to close file: %s", error_message);
+            free(error_message);
+        }
+        else
+            ASC_WARNING("failed to close file");
+    }
+
+    return ASIO_STATUS_SUCCESS;
+
+error_close_file:
+    if (EOF == fclose(output_file))
+    {
+        error_message = asc_all_strerror_r(errno);
+        if (NULL != error_message)
+        {
+            ASC_WARNING("failed to close file: %s", error_message);
+            free(error_message);
+        }
+        else
+            ASC_WARNING("failed to close file");
+    }
+error:
+    return ASIO_STATUS_ERROR;
+}
+
 asio_riff_chunk_t *asio_riff_chunk_init()
 {
     asio_riff_chunk_t *chunk;
@@ -375,7 +491,7 @@ size_t asio_riff_file_chunks_read(asio_riff_file_t *file, FILE *input_file)
             goto error_free_list;
         }
 
-        data = malloc(chunk_size);
+        data = malloc(chunk_size + (chunk_size & 0x1));
         if (NULL == data)
         {
             ASC_ERROR("out of memory when allocating chunk data");
@@ -473,4 +589,76 @@ error_free_list:
     }
 error:
     return chunk_size_read;
+}
+
+size_t asio_riff_file_chunks_write(asio_riff_file_t *file, FILE *output_file)
+{
+    size_t chunk_size_written;
+    uint32_t i;
+    char *error_message;
+
+    chunk_size_written = 0;
+
+    for (i = 0; i < file->chunk_count; i++)
+    {
+        if (1 != fwrite(&file->chunks[i]->type, sizeof(file->chunks[i]->type),
+                        1, output_file))
+        {
+            error_message = asc_all_strerror_r(errno);
+            if (NULL != error_message)
+            {
+                ASC_ERROR("failed to write chunk type value: %s",
+                          error_message);
+                free(error_message);
+            }
+            else
+                ASC_ERROR("failed to write chunk type value");
+
+            goto error;
+        }
+        chunk_size_written += sizeof(file->chunks[i]->type);
+        ASC_DEBUG("wrote chunk type %#010x", file->chunks[i]->type);
+
+        if (1 != fwrite(&file->chunks[i]->data_size,
+                        sizeof(file->chunks[i]->data_size), 1, output_file))
+        {
+            error_message = asc_all_strerror_r(errno);
+            if (NULL != error_message)
+            {
+                ASC_ERROR("failed to write chunk size value: %s",
+                          error_message);
+                free(error_message);
+            }
+            else
+                ASC_ERROR("failed to write chunk size value");
+
+            goto error;
+        }
+        chunk_size_written += sizeof(file->chunks[i]->data_size);
+        ASC_DEBUG("wrote chunk size %u", file->chunks[i]->data_size);
+
+        if (1 != fwrite(file->chunks[i]->data, file->chunks[i]->data_size +
+                        (file->chunks[i]->data_size & 0x1), 1,
+                        output_file))
+        {
+            error_message = asc_all_strerror_r(errno);
+            if (NULL != error_message)
+            {
+                ASC_ERROR("failed to write chunk data: %s",
+                          error_message);
+                free(error_message);
+            }
+            else
+                ASC_ERROR("failed to write chunk data");
+
+            goto error;
+        }
+        chunk_size_written += file->chunks[i]->data_size;
+        ASC_DEBUG("wrote chunk data");
+   }
+
+    return chunk_size_written;
+
+error:
+    return chunk_size_written;
 }

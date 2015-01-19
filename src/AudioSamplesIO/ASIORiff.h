@@ -33,6 +33,7 @@ struct asio_riff_chunk_s {
 asio_riff_file_t *asio_riff_file_init();
 void asio_riff_file_free(asio_riff_file_t *file);
 int asio_riff_file_open(asio_riff_file_t *file, const char *filename);
+int asio_riff_file_write(asio_riff_file_t *file, const char *filename);
 
 asio_riff_chunk_t *asio_riff_chunk_init();
 void asio_riff_chunk_free(asio_riff_chunk_t *);
