@@ -159,7 +159,7 @@ int asio_riff_file_open(asio_riff_file_t *file, const char *filename)
 
         goto error_close_file;
     }
-    ASC_DEBUG("RIFF file size %d", file->file_size);
+    ASC_DEBUG("RIFF file size %u", file->file_size);
 
     if (1 != fread(&file->file_type, sizeof(file->file_type), 1, input_file))
     {
@@ -192,7 +192,7 @@ int asio_riff_file_open(asio_riff_file_t *file, const char *filename)
 
         goto error_free_chunks;
     }
-    ASC_DEBUG("read %zu bytes in %d chunks", chunk_size_read, file->chunk_count);
+    ASC_DEBUG("read %zu bytes in %u chunks", chunk_size_read, file->chunk_count);
 
     if (EOF == fclose(input_file))
     {
@@ -320,7 +320,7 @@ asio_riff_chunk_t **asio_riff_chunks_init(uint32_t chunk_count)
         return NULL;
     }
 
-    ASC_DEBUG("allocated RIFF chunk list of length %d at %p",
+    ASC_DEBUG("allocated RIFF chunk list of length %u at %p",
               chunk_count, (void *) chunks);
 
     return chunks;
@@ -421,11 +421,11 @@ size_t asio_riff_file_chunks_read(asio_riff_file_t *file, FILE *input_file)
         if (NULL != chunk_type_ascii)
         {
             ASC_DEBUG("read RIFF file chunk of type '%s' (%#010x) and data "
-                      "size %d", chunk_type_ascii, chunk_type, chunk_size);
+                      "size %u", chunk_type_ascii, chunk_type, chunk_size);
             free(chunk_type_ascii);
         }
         else
-            ASC_DEBUG("read RIFF file chunk of type %#010x and data size %d",
+            ASC_DEBUG("read RIFF file chunk of type %#010x and data size %u",
                       chunk_type, chunk_size);
     }
 
