@@ -9,8 +9,8 @@
 #include <stdint.h>
 
 #define ASIO_FOURCC_NULL 0x20202020
-#define ASIO_FOURCC_RIFF 0x52494646
-#define ASIO_FOURCC_WAVE 0x57415645
+#define ASIO_FOURCC_RIFF 0x46464952
+#define ASIO_FOURCC_WAVE 0x45564157
 
 typedef struct asio_riff_file_s asio_riff_file_t;
 typedef struct asio_riff_chunk_s asio_riff_chunk_t;

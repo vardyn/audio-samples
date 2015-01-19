@@ -105,7 +105,7 @@ int asio_riff_file_open(asio_riff_file_t *file, const char *filename)
 
     if (ASIO_FOURCC_RIFF != riff_magic)
     {
-        ASC_ERROR("RIFF magic value incorrect");
+        ASC_ERROR("read incorrect RIFF magic value %#010x", riff_magic);
 
         goto error_close_file;
     }
@@ -139,7 +139,7 @@ int asio_riff_file_open(asio_riff_file_t *file, const char *filename)
 
         goto error_close_file;
     }
-    ASC_DEBUG("RIFF file type %#010X", file->file_type);
+    ASC_DEBUG("RIFF file type %#010x", file->file_type);
 
     chunk_size_read = asio_riff_file_chunks_read(file, input_file);
     if ((file->file_size - sizeof(file->file_type)) != chunk_size_read)
@@ -148,7 +148,7 @@ int asio_riff_file_open(asio_riff_file_t *file, const char *filename)
 
         goto error_free_chunks;
     }
-    ASC_DEBUG("read %zu bytes as %d chunks", chunk_size_read, file->chunk_count);
+    ASC_DEBUG("read %zu bytes in %d chunks", chunk_size_read, file->chunk_count);
 
     if (EOF == fclose(input_file))
     {
@@ -289,13 +289,16 @@ size_t asio_riff_file_chunks_read(asio_riff_file_t *file, FILE *input_file)
     uint32_t chunk_count, chunk_type, chunk_size, i;
     void *data;
 
+    chunk_size_read = 0;
     chunk_count = 0;
     chunk_list_head = chunk_list_last = chunk_list_current = NULL;
 
-    while (0 == feof(input_file))
+    while (1)
     {
         if (1 != fread(&chunk_type, sizeof(chunk_type), 1, input_file))
         {
+            if (feof(input_file))
+                break;
             ASC_ERROR("failed to read chunk type");
             goto error_free_list;
         }
@@ -313,7 +316,7 @@ size_t asio_riff_file_chunks_read(asio_riff_file_t *file, FILE *input_file)
             goto error_free_list;
         }
 
-        if (1 != fread(data, chunk_size, 1, input_file))
+        if (1 != fread(data, chunk_size + (chunk_size & 0x1), 1, input_file))
         {
             ASC_ERROR("failed to read chunk data");
             goto error_free_data;
@@ -348,7 +351,7 @@ size_t asio_riff_file_chunks_read(asio_riff_file_t *file, FILE *input_file)
         data = NULL;
         chunk_count++;
 
-        ASC_DEBUG("read RIFF file chunk of type %#010X and data size %d",
+        ASC_DEBUG("read RIFF file chunk of type %#010x and data size %d",
                   chunk_type, chunk_size);
     }
 
@@ -369,6 +372,7 @@ size_t asio_riff_file_chunks_read(asio_riff_file_t *file, FILE *input_file)
                            file->chunks[i]->data_size;
         chunk_list_current = chunk_list_current->next;
     }
+    file->chunk_count = chunk_count;
 
     chunk_list_current = chunk_list_head;
     while (NULL != chunk_list_current)
