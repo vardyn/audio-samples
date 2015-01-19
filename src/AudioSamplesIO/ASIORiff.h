@@ -12,6 +12,8 @@
 #define ASIO_FOURCC_RIFF 0x46464952
 #define ASIO_FOURCC_WAVE 0x45564157
 
+extern const char asio_fourcc_byte_to_ascii[];
+
 typedef struct asio_riff_file_s asio_riff_file_t;
 typedef struct asio_riff_chunk_s asio_riff_chunk_t;
 
@@ -34,5 +36,7 @@ int asio_riff_file_open(asio_riff_file_t *file, const char *filename);
 
 asio_riff_chunk_t *asio_riff_chunk_init();
 void asio_riff_chunk_free(asio_riff_chunk_t *);
+
+char *asio_fourcc_to_ascii(uint32_t);
 
 #endif // ASIO_RIFF_H_INCLUDED

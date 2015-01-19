@@ -13,6 +13,41 @@
 #include <stdio.h>
 #include <string.h>
 
+const char asio_fourcc_byte_to_ascii[] = {
+    '?', '?', '?', '?', '?', '?', '?', '?',
+    '?', '?', '?', '?', '?', '?', '?', '?',
+    '?', '?', '?', '?', '?', '?', '?', '?',
+    '?', '?', '?', '?', '?', '?', '?', '?',
+    ' ', '?', '?', '?', '?', '?', '?', '?',
+    '?', '?', '?', '?', '?', '?', '?', '?',
+    '0', '1', '2', '3', '4', '5', '6', '7',
+    '8', '9', '?', '?', '?', '?', '?', '?',
+    '?', 'A', 'B', 'C', 'D', 'E', 'F', 'G',
+    'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O',
+    'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W',
+    'X', 'Y', 'Z', '?', '?', '?', '?', '?',
+    '?', 'a', 'b', 'c', 'd', 'e', 'f', 'g',
+    'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o',
+    'p', 'q', 'r', 's', 't', 'u', 'v', 'w',
+    'x', 'y', 'z', '?', '?', '?', '?', '?',
+    '?', '?', '?', '?', '?', '?', '?', '?',
+    '?', '?', '?', '?', '?', '?', '?', '?',
+    '?', '?', '?', '?', '?', '?', '?', '?',
+    '?', '?', '?', '?', '?', '?', '?', '?',
+    '?', '?', '?', '?', '?', '?', '?', '?',
+    '?', '?', '?', '?', '?', '?', '?', '?',
+    '?', '?', '?', '?', '?', '?', '?', '?',
+    '?', '?', '?', '?', '?', '?', '?', '?',
+    '?', '?', '?', '?', '?', '?', '?', '?',
+    '?', '?', '?', '?', '?', '?', '?', '?',
+    '?', '?', '?', '?', '?', '?', '?', '?',
+    '?', '?', '?', '?', '?', '?', '?', '?',
+    '?', '?', '?', '?', '?', '?', '?', '?',
+    '?', '?', '?', '?', '?', '?', '?', '?',
+    '?', '?', '?', '?', '?', '?', '?', '?',
+    '?', '?', '?', '?', '?', '?', '?', '?'
+};
+
 typedef struct asio_riff_chunks_node_s asio_riff_chunks_node_t;
 
 struct asio_riff_chunks_node_s {
@@ -62,7 +97,7 @@ void asio_riff_file_free(asio_riff_file_t *file)
 int asio_riff_file_open(asio_riff_file_t *file, const char *filename)
 {
     FILE *input_file;
-    char *error_message;
+    char *error_message, *file_type_ascii;
     uint32_t riff_magic, i;
     size_t chunk_size_read;
 
@@ -139,7 +174,16 @@ int asio_riff_file_open(asio_riff_file_t *file, const char *filename)
 
         goto error_close_file;
     }
-    ASC_DEBUG("RIFF file type %#010x", file->file_type);
+
+    file_type_ascii = asio_fourcc_to_ascii(file->file_type);
+    if (NULL != file_type_ascii)
+    {
+        ASC_DEBUG("RIFF file type '%s' (%#010x)", file_type_ascii,
+                  file->file_type);
+        free(file_type_ascii);
+    }
+    else
+        ASC_DEBUG("RIFF file type %#010x", file->file_type);
 
     chunk_size_read = asio_riff_file_chunks_read(file, input_file);
     if ((file->file_size - sizeof(file->file_type)) != chunk_size_read)
@@ -219,6 +263,27 @@ void asio_riff_chunk_free(asio_riff_chunk_t *chunk)
     ASC_DEBUG("freed RIFF chunk at %p", (void *) chunk);
 }
 
+char *asio_fourcc_to_ascii(uint32_t fourcc)
+{
+    char *ascii;
+    int i;
+
+    ascii = (char *) calloc(5, sizeof(char));
+    if (NULL == ascii)
+    {
+        ASC_ERROR("out of memory when allocating ASCII FOURCC");
+        return NULL;
+    }
+
+    for (i = 0; i < 4; i++)
+        ascii[i] = asio_fourcc_byte_to_ascii[(uint8_t)
+                                             ((fourcc >> (i*8)) & 0xff)];
+
+    ascii[4] = '\0';
+
+    return ascii;
+}
+
 asio_riff_chunks_node_t *asio_riff_chunks_node_init()
 {
     asio_riff_chunks_node_t *chunk_list_node;
@@ -288,6 +353,7 @@ size_t asio_riff_file_chunks_read(asio_riff_file_t *file, FILE *input_file)
                             *chunk_list_last;
     uint32_t chunk_count, chunk_type, chunk_size, i;
     void *data;
+    char *chunk_type_ascii;
 
     chunk_size_read = 0;
     chunk_count = 0;
@@ -351,8 +417,16 @@ size_t asio_riff_file_chunks_read(asio_riff_file_t *file, FILE *input_file)
         data = NULL;
         chunk_count++;
 
-        ASC_DEBUG("read RIFF file chunk of type %#010x and data size %d",
-                  chunk_type, chunk_size);
+        chunk_type_ascii = asio_fourcc_to_ascii(chunk_type);
+        if (NULL != chunk_type_ascii)
+        {
+            ASC_DEBUG("read RIFF file chunk of type '%s' (%#010x) and data "
+                      "size %d", chunk_type_ascii, chunk_type, chunk_size);
+            free(chunk_type_ascii);
+        }
+        else
+            ASC_DEBUG("read RIFF file chunk of type %#010x and data size %d",
+                      chunk_type, chunk_size);
     }
 
     file->chunks = asio_riff_chunks_init(chunk_count);
