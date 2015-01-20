@@ -39,11 +39,10 @@ struct asio_wav_fmt_ext_s {
 asio_wav_fmt_t *asio_wav_fmt_init();
 void asio_wav_fmt_free(asio_wav_fmt_t *);
 int asio_wav_fmt_unpack(asio_wav_fmt_t *, asio_riff_chunk_t *);
-int asio_wav_fmt_pack(asio_wav_fmt_t *, asio_riff_chunk_t *);
+
 asio_wav_fmt_ext_t *asio_wav_fmt_ext_init();
 void asio_wav_fmt_ext_free(asio_wav_fmt_ext_t *);
 int asio_wav_fmt_ext_unpack(asio_wav_fmt_ext_t *, asio_wav_fmt_t *);
-int asio_wav_fmt_ext_pack(asio_wav_fmt_ext_t *, asio_wav_fmt_t *);
 
 /*
  * WAVE codec format tags
