@@ -30,7 +30,10 @@ struct asio_wav_fmt_s {
 struct asio_wav_fmt_ext_s {
     uint16_t samples_value;
     uint32_t channel_mask;
-    uint8_t  guid[16];
+    uint32_t uuid1;
+    uint16_t uuid2;
+    uint16_t uuid3;
+    uint8_t  uuid4[8];
 };
 
 asio_wav_fmt_t *asio_wav_fmt_init();

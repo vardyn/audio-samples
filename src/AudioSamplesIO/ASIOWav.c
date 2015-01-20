@@ -173,14 +173,15 @@ int asio_wav_fmt_ext_unpack(asio_wav_fmt_ext_t *fmt_ext, asio_wav_fmt_t *fmt)
     fmt_ext->channel_mask = *((uint32_t *) (fmt->extra_bytes + 2));
     ASC_DEBUG("read extensible WAV format channel mask %#010x",
               fmt_ext->channel_mask);
-    memcpy(fmt_ext->guid, fmt->extra_bytes + 6, 16);
-    ASC_DEBUG("read extensible WAV format GUID %02x%02x%02x%02x-%02x%02x-"
-              "%02x%02x-%02x%02x-%02x%02x%02x%02x%02x%02x", fmt_ext->guid[0],
-              fmt_ext->guid[1], fmt_ext->guid[2], fmt_ext->guid[3],
-              fmt_ext->guid[4], fmt_ext->guid[5], fmt_ext->guid[6],
-              fmt_ext->guid[7], fmt_ext->guid[8], fmt_ext->guid[9],
-              fmt_ext->guid[10], fmt_ext->guid[11], fmt_ext->guid[12],
-              fmt_ext->guid[13], fmt_ext->guid[14], fmt_ext->guid[15]);
+    fmt_ext->uuid1 = *((uint32_t *) (fmt->extra_bytes + 6));
+    fmt_ext->uuid2 = *((uint16_t *) (fmt->extra_bytes + 10));
+    fmt_ext->uuid3 = *((uint16_t *) (fmt->extra_bytes + 12));
+    memcpy(fmt_ext->uuid4, fmt->extra_bytes + 14, 8);
+    ASC_DEBUG("read extensible WAV format GUID %08x-%04x-%04x-%02x%02x-"
+              "%02x%02x%02x%02x%02x%02x", fmt_ext->uuid1, fmt_ext->uuid2,
+              fmt_ext->uuid3, fmt_ext->uuid4[0], fmt_ext->uuid4[1],
+              fmt_ext->uuid4[2], fmt_ext->uuid4[3], fmt_ext->uuid4[4],
+              fmt_ext->uuid4[5], fmt_ext->uuid4[6], fmt_ext->uuid4[7]);
 
     return ASIO_STATUS_SUCCESS;
 
