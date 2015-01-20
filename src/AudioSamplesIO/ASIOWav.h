@@ -12,9 +12,12 @@
 
 #define ASIO_FOURCC_WAVE 0x45564157
 #define ASIO_FOURCC_FMT  0x20746d66
+#define ASIO_FOURCC_SMPL 0x6c706d73
 
 typedef struct asio_wav_fmt_s asio_wav_fmt_t;
 typedef struct asio_wav_fmt_ext_s asio_wav_fmt_ext_t;
+typedef struct asio_wav_smpl_s asio_wav_smpl_t;
+typedef struct asio_wav_smpl_loop_s asio_wav_smpl_loop_t;
 
 struct asio_wav_fmt_s {
     uint16_t format_tag;
@@ -36,6 +39,29 @@ struct asio_wav_fmt_ext_s {
     uint8_t  uuid4[8];
 };
 
+struct asio_wav_smpl_s {
+    uint32_t manufacturer;
+    uint32_t product;
+    uint32_t sample_period;
+    uint32_t midi_root_note;
+    uint32_t midi_pitch_fraction;
+    uint32_t smpte_format;
+    uint32_t smpte_offset;
+    uint32_t sample_loops_count;
+    uint32_t sampler_data_size;
+    asio_wav_smpl_loop_t *sample_loops;
+    void *sampler_data;
+};
+
+struct asio_wav_smpl_loop_s {
+    uint32_t cue_point_id;
+    uint32_t type;
+    uint32_t start_offset;
+    uint32_t end_offset;
+    uint32_t fraction;
+    uint32_t play_count;
+};
+
 asio_wav_fmt_t *asio_wav_fmt_init();
 void asio_wav_fmt_free(asio_wav_fmt_t *);
 int asio_wav_fmt_unpack(asio_wav_fmt_t *, asio_riff_chunk_t *);
@@ -43,6 +69,10 @@ int asio_wav_fmt_unpack(asio_wav_fmt_t *, asio_riff_chunk_t *);
 asio_wav_fmt_ext_t *asio_wav_fmt_ext_init();
 void asio_wav_fmt_ext_free(asio_wav_fmt_ext_t *);
 int asio_wav_fmt_ext_unpack(asio_wav_fmt_ext_t *, asio_wav_fmt_t *);
+
+asio_wav_smpl_t *asio_wav_smpl_init();
+void asio_wav_smpl_free(asio_wav_smpl_t *);
+int asio_wav_smpl_unpack(asio_wav_smpl_t *, asio_riff_chunk_t *);
 
 /*
  * WAVE codec format tags

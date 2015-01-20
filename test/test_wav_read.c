@@ -14,6 +14,7 @@ int main(int argc, char **argv)
     int i;
     asio_wav_fmt_t *fmt;
     asio_wav_fmt_ext_t *fmt_ext;
+    asio_wav_smpl_t *smpl;
 
     asc_simple_logging_init();
 
@@ -99,6 +100,22 @@ int main(int argc, char **argv)
             }
 
             asio_wav_fmt_free(fmt);
+        }
+
+        if (ASIO_FOURCC_SMPL == file->chunks[i]->type)
+        {
+            smpl = asio_wav_smpl_init();
+            if (NULL == smpl)
+            {
+                ASC_WARNING("failed to create WAV smpl");
+                continue;
+            }
+
+            if (ASIO_STATUS_SUCCESS != asio_wav_smpl_unpack(smpl,
+                                                            file->chunks[i]))
+                ASC_WARNING("failed to unpack WAV smpl");
+
+            asio_wav_smpl_free(smpl);
         }
     }
 
