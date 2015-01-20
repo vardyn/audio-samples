@@ -43,6 +43,12 @@ int main(int argc, char **argv)
     else
         ASC_INFO("RIFF file type: %#010x", file->file_type);
 
+    if (ASIO_FOURCC_WAVE != file->file_type)
+    {
+        ASC_ERROR("RIFF file type must be WAVE");
+        goto error_free_file;
+    }
+
     ASC_INFO("listing %u chunks", file->chunk_count);
     for (i = 0; i < file->chunk_count; i++)
     {
