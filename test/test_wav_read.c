@@ -13,6 +13,7 @@ int main(int argc, char **argv)
     char *fourcc_ascii;
     int i;
     asio_wav_fmt_t *fmt;
+    asio_wav_fmt_ext_t *fmt_ext;
 
     asc_simple_logging_init();
 
@@ -73,8 +74,29 @@ int main(int argc, char **argv)
                 continue;
             }
 
-            if (ASIO_STATUS_SUCCESS != asio_wav_fmt_unpack(fmt, file->chunks[i]))
+            if (ASIO_STATUS_SUCCESS != asio_wav_fmt_unpack(fmt,
+                                                           file->chunks[i]))
+            {
                 ASC_WARNING("failed to unpack WAV format");
+                continue;
+            }
+
+            if (ASIO_WAVE_FORMAT_EXTENSIBLE == fmt->format_tag)
+            {
+                fmt_ext = asio_wav_fmt_ext_init();
+                if (NULL == fmt_ext)
+                {
+                    ASC_WARNING("failed to create extensible WAV format");
+                    asio_wav_fmt_free(fmt);
+                    continue;
+                }
+
+                if (ASIO_STATUS_SUCCESS != asio_wav_fmt_ext_unpack(fmt_ext,
+                                                                   fmt))
+                    ASC_WARNING("failed to unpack extensible WAV format");
+
+                asio_wav_fmt_ext_free(fmt_ext);
+            }
 
             asio_wav_fmt_free(fmt);
         }

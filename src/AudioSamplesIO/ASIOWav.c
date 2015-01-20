@@ -67,8 +67,14 @@ int asio_wav_fmt_unpack(asio_wav_fmt_t *fmt, asio_riff_chunk_t *chunk)
         goto error;
     }
 
-    fmt->compression_code = *((uint16_t *) chunk->data);
-    ASC_DEBUG("read WAV format compression code %u", fmt->compression_code);
+    if (NULL == fmt)
+    {
+        ASC_ERROR("fmt must not be null");
+        goto error;
+    }
+
+    fmt->format_tag = *((uint16_t *) chunk->data);
+    ASC_DEBUG("read WAV format tag %u", fmt->format_tag);
     fmt->channels = *((uint16_t *) (chunk->data + 2));
     ASC_DEBUG("read WAV format number of channels %u", fmt->channels);
     fmt->sample_rate = *((uint32_t *) (chunk->data + 4));
@@ -103,6 +109,78 @@ int asio_wav_fmt_unpack(asio_wav_fmt_t *fmt, asio_riff_chunk_t *chunk)
     }
     else
         fmt->extra_bytes = NULL;
+
+    return ASIO_STATUS_SUCCESS;
+
+error:
+    return ASIO_STATUS_ERROR;
+}
+
+asio_wav_fmt_ext_t *asio_wav_fmt_ext_init()
+{
+    asio_wav_fmt_ext_t *fmt_ext;
+
+    fmt_ext = (asio_wav_fmt_ext_t *) calloc(1, sizeof(asio_wav_fmt_ext_t));
+    if (NULL == fmt_ext)
+    {
+        ASC_ERROR("out of memory when allocating extensible WAV format");
+        return NULL;
+    }
+
+    ASC_DEBUG("allocated extensible WAV format at %p", fmt_ext);
+
+    return fmt_ext;
+}
+
+void asio_wav_fmt_ext_free(asio_wav_fmt_ext_t *fmt_ext)
+{
+    if (NULL == fmt_ext)
+        return;
+
+    free(fmt_ext);
+    ASC_DEBUG("freed extensible WAV format at %p", fmt_ext);
+}
+
+int asio_wav_fmt_ext_unpack(asio_wav_fmt_ext_t *fmt_ext, asio_wav_fmt_t *fmt)
+{
+    if (NULL == fmt)
+    {
+        ASC_ERROR("fmt must not be null");
+        goto error;
+    }
+
+    if (ASIO_WAVE_FORMAT_EXTENSIBLE != fmt->format_tag)
+    {
+        ASC_ERROR("fmt format tag must be %#06x", ASIO_WAVE_FORMAT_EXTENSIBLE);
+        goto error;
+    }
+
+    if (22 != fmt->extra_bytes_size)
+    {
+        ASC_ERROR("fmt extra bytes size must be 22");
+        goto error;
+    }
+
+    if (NULL == fmt_ext)
+    {
+        ASC_ERROR("fmt_ext must not be null");
+        goto error;
+    }
+
+    fmt_ext->samples_value = *((uint16_t *) fmt->extra_bytes);
+    ASC_DEBUG("read extensible WAV format samples value %u",
+              fmt_ext->samples_value);
+    fmt_ext->channel_mask = *((uint32_t *) (fmt->extra_bytes + 2));
+    ASC_DEBUG("read extensible WAV format channel mask %#010x",
+              fmt_ext->channel_mask);
+    memcpy(fmt_ext->guid, fmt->extra_bytes + 6, 16);
+    ASC_DEBUG("read extensible WAV format GUID %02x%02x%02x%02x-%02x%02x-"
+              "%02x%02x-%02x%02x-%02x%02x%02x%02x%02x%02x", fmt_ext->guid[0],
+              fmt_ext->guid[1], fmt_ext->guid[2], fmt_ext->guid[3],
+              fmt_ext->guid[4], fmt_ext->guid[5], fmt_ext->guid[6],
+              fmt_ext->guid[7], fmt_ext->guid[8], fmt_ext->guid[9],
+              fmt_ext->guid[10], fmt_ext->guid[11], fmt_ext->guid[12],
+              fmt_ext->guid[13], fmt_ext->guid[14], fmt_ext->guid[15]);
 
     return ASIO_STATUS_SUCCESS;
 
