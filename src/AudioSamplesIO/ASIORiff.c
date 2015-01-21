@@ -61,6 +61,7 @@ asio_riff_chunk_t **asio_riff_chunks_init(uint32_t chunk_count);
 void asio_riff_chunks_free(asio_riff_file_t *file);
 size_t asio_riff_file_chunks_read(asio_riff_file_t *, FILE *);
 size_t asio_riff_file_chunks_write(asio_riff_file_t *, FILE *);
+void asio_riff_file_recalculate_data_size(asio_riff_file_t *);
 
 asio_riff_file_t *asio_riff_file_init()
 {
@@ -347,6 +348,45 @@ error:
     return ASIO_STATUS_ERROR;
 }
 
+int asio_riff_file_add_chunk(asio_riff_file_t *file, asio_riff_chunk_t *chunk)
+{
+    asio_riff_chunk_t **new_chunks;
+    uint32_t new_chunk_count;
+
+    if (NULL == file)
+    {
+        ASC_ERROR("file must not be null");
+        goto error;
+    }
+
+    if (NULL == chunk)
+    {
+        ASC_ERROR("chunk must not be null");
+        goto error;
+    }
+
+    new_chunk_count = file->chunk_count + 1;
+    new_chunks = (asio_riff_chunk_t **)
+                 realloc(file->chunks,
+                         new_chunk_count*sizeof(asio_riff_chunk_t *));
+    if (NULL == new_chunks)
+    {
+        ASC_DEBUG("out of memory when resizing chunk array");
+        goto error;
+    }
+
+    new_chunks[new_chunk_count - 1] = chunk;
+
+    file->chunks = new_chunks;
+    file->chunk_count = new_chunk_count;
+    asio_riff_file_recalculate_data_size(file);
+
+    return ASIO_STATUS_SUCCESS;
+
+error:
+    return ASIO_STATUS_ERROR;
+}
+
 asio_riff_chunk_t *asio_riff_chunk_init()
 {
     asio_riff_chunk_t *chunk;
@@ -377,6 +417,23 @@ void asio_riff_chunk_free(asio_riff_chunk_t *chunk)
 
     free(chunk);
     ASC_DEBUG("freed RIFF chunk at %p", (void *) chunk);
+}
+
+int asio_riff_chunk_is_empty(asio_riff_chunk_t *chunk)
+{
+    if (NULL == chunk)
+        return 0;
+
+    if (ASIO_FOURCC_NULL != chunk->type)
+        return 0;
+
+    if (0 != chunk->data_size)
+        return 0;
+
+    if (NULL != chunk->data)
+        return 0;
+
+    return 1;
 }
 
 char *asio_fourcc_to_ascii(uint32_t fourcc)
@@ -469,6 +526,7 @@ size_t asio_riff_file_chunks_read(asio_riff_file_t *file, FILE *input_file)
                             *chunk_list_last;
     uint32_t chunk_count, chunk_type, chunk_size, i;
     void *data;
+    uint8_t padding_byte;
     char *chunk_type_ascii;
 
     chunk_size_read = 0;
@@ -484,25 +542,39 @@ size_t asio_riff_file_chunks_read(asio_riff_file_t *file, FILE *input_file)
             ASC_ERROR("failed to read chunk type");
             goto error_free_list;
         }
+        ASC_DEBUG("read chunk type %#010x", chunk_type);
 
-        if (1 != fread(&chunk_size, sizeof(chunk_type), 1, input_file))
+        if (1 != fread(&chunk_size, sizeof(chunk_size), 1, input_file))
         {
             ASC_ERROR("failed to read chunk size");
             goto error_free_list;
         }
+        ASC_DEBUG("read chunk size %u", chunk_size);
 
-        data = malloc(chunk_size + (chunk_size & 0x1));
+        data = malloc(chunk_size);
         if (NULL == data)
         {
             ASC_ERROR("out of memory when allocating chunk data");
             goto error_free_list;
         }
+        ASC_DEBUG("allocated %u bytes for chunk data", chunk_size);
 
-        if (1 != fread(data, chunk_size + (chunk_size & 0x1), 1, input_file))
+        if (1 != fread(data, chunk_size, 1, input_file))
         {
             ASC_ERROR("failed to read chunk data");
             goto error_free_data;
         }
+
+        /* read an extra byte for odd-sized chunks
+           if this fails it is OK as long as we are at EOF */
+        if (chunk_size & 0x1)
+            if (1 != fread(&padding_byte, 1, 1, input_file))
+                if (!feof(input_file))
+                {
+                    ASC_ERROR("failed to read chunk data padding byte but not "
+                              "at EOF");
+                    goto error_free_data;
+                }
 
         chunk_list_current = asio_riff_chunks_node_init();
         if (NULL == chunk_list_current)
@@ -596,6 +668,7 @@ size_t asio_riff_file_chunks_write(asio_riff_file_t *file, FILE *output_file)
     size_t chunk_size_written;
     uint32_t i;
     char *error_message;
+    uint8_t padding_byte;
 
     chunk_size_written = 0;
 
@@ -637,8 +710,7 @@ size_t asio_riff_file_chunks_write(asio_riff_file_t *file, FILE *output_file)
         chunk_size_written += sizeof(file->chunks[i]->data_size);
         ASC_DEBUG("wrote chunk size %u", file->chunks[i]->data_size);
 
-        if (1 != fwrite(file->chunks[i]->data, file->chunks[i]->data_size +
-                        (file->chunks[i]->data_size & 0x1), 1,
+        if (1 != fwrite(file->chunks[i]->data, file->chunks[i]->data_size, 1,
                         output_file))
         {
             error_message = asc_all_strerror_r(errno);
@@ -655,10 +727,41 @@ size_t asio_riff_file_chunks_write(asio_riff_file_t *file, FILE *output_file)
         }
         chunk_size_written += file->chunks[i]->data_size;
         ASC_DEBUG("wrote chunk data");
+
+        /* write an extra byte when chunk data size is odd and current chunk is
+           not the last one */
+        if (file->chunks[i]->data_size & 0x1 && i != file->chunk_count - 1)
+        {
+            padding_byte = 0;
+            if (1 != fwrite(&padding_byte, 1, 1, output_file))
+            {
+                ASC_ERROR("failed to write chunk data padding byte");
+                goto error;
+            }
+        }
    }
 
     return chunk_size_written;
 
 error:
     return chunk_size_written;
+}
+
+void asio_riff_file_recalculate_data_size(asio_riff_file_t *file)
+{
+    uint32_t data_size;
+    int i;
+
+    if (NULL == file)
+        return;
+
+    data_size = sizeof(file->file_type);
+
+    for (i = 0; i < file->chunk_count; i++)
+        data_size += sizeof(file->chunks[i]->type) +
+                     sizeof(file->chunks[i]->data_size) +
+                     file->chunks[i]->data_size;
+
+    file->file_size = data_size;
+    ASC_DEBUG("reset file size of file at %p to %u", file, file->file_size);
 }

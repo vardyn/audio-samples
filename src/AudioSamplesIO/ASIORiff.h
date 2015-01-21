@@ -33,9 +33,11 @@ asio_riff_file_t *asio_riff_file_init();
 void asio_riff_file_free(asio_riff_file_t *file);
 int asio_riff_file_open(asio_riff_file_t *file, const char *filename);
 int asio_riff_file_write(asio_riff_file_t *file, const char *filename);
+int asio_riff_file_add_chunk(asio_riff_file_t *, asio_riff_chunk_t *);
 
 asio_riff_chunk_t *asio_riff_chunk_init();
 void asio_riff_chunk_free(asio_riff_chunk_t *);
+int asio_riff_chunk_is_empty(asio_riff_chunk_t *chunk);
 
 char *asio_fourcc_to_ascii(uint32_t);
 
