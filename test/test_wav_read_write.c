@@ -16,6 +16,7 @@ int main(int argc, char **argv)
     asio_wav_fmt_ext_t *fmt_ext;
     asio_wav_smpl_t *smpl;
     asio_wav_inst_t *inst;
+    asio_riff_chunk_t *inst_chunk;
 
     asc_simple_logging_init();
 
@@ -118,23 +119,48 @@ int main(int argc, char **argv)
 
             asio_wav_smpl_free(smpl);
         }
-
-        if (ASIO_FOURCC_INST == file->chunks[i]->type)
-        {
-            inst = asio_wav_inst_init();
-            if (NULL == inst)
-            {
-                ASC_WARNING("failed to create WAV inst");
-                continue;
-            }
-
-            if (ASIO_STATUS_SUCCESS != asio_wav_inst_unpack(inst,
-                                                            file->chunks[i]))
-                ASC_WARNING("failed to unpack WAV inst");
-
-            asio_wav_inst_free(inst);
-        }
     }
+
+    inst = asio_wav_inst_init();
+    if (NULL == inst)
+    {
+        ASC_ERROR("failed to create WAV inst");
+        goto error_free_file;
+    }
+
+    inst->root_note = 40; /* E2 */
+    inst->fine_tune = 0;
+    inst->gain = 0;
+    inst->low_note = 28; /* E1 */
+    inst->high_note = 45; /* A2 */
+    inst->low_velocity = 1;
+    inst->high_velocity = 127;
+
+    inst_chunk = asio_riff_chunk_init();
+    if (NULL == inst_chunk)
+    {
+        ASC_ERROR("failed to create chunk for WAV inst");
+        goto error_free_inst;
+    }
+
+    if (ASIO_STATUS_SUCCESS != asio_wav_inst_pack(inst, inst_chunk))
+    {
+        ASC_ERROR("failed to pack WAV inst into chunk");
+        goto error_free_inst_chunk;
+    }
+
+    asio_wav_inst_free(inst);
+
+    if (ASIO_STATUS_SUCCESS != asio_riff_file_add_chunk(file, inst_chunk))
+    {
+        ASC_ERROR("failed to add inst chunk to file");
+        goto error_free_inst_chunk;
+    }
+
+    ASC_DEBUG("attempting to write simple_kick_copy.wav in the current "
+              "directory");
+
+    asio_riff_file_write(file, "simple_kick_copy.wav");
 
     asio_riff_file_free(file);
 
@@ -142,6 +168,10 @@ int main(int argc, char **argv)
 
     return 0;
 
+error_free_inst_chunk:
+    asio_riff_chunk_free(inst_chunk);
+error_free_inst:
+        asio_wav_inst_free(inst);
 error_free_file:
     asio_riff_file_free(file);
 error:

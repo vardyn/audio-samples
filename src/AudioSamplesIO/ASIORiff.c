@@ -61,6 +61,7 @@ asio_riff_chunk_t **asio_riff_chunks_init(uint32_t chunk_count);
 void asio_riff_chunks_free(asio_riff_file_t *file);
 size_t asio_riff_file_chunks_read(asio_riff_file_t *, FILE *);
 size_t asio_riff_file_chunks_write(asio_riff_file_t *, FILE *);
+void asio_riff_file_recalculate_data_size(asio_riff_file_t *);
 
 asio_riff_file_t *asio_riff_file_init()
 {
@@ -347,6 +348,45 @@ error:
     return ASIO_STATUS_ERROR;
 }
 
+int asio_riff_file_add_chunk(asio_riff_file_t *file, asio_riff_chunk_t *chunk)
+{
+    asio_riff_chunk_t **new_chunks;
+    uint32_t new_chunk_count;
+
+    if (NULL == file)
+    {
+        ASC_ERROR("file must not be null");
+        goto error;
+    }
+
+    if (NULL == chunk)
+    {
+        ASC_ERROR("chunk must not be null");
+        goto error;
+    }
+
+    new_chunk_count = file->chunk_count + 1;
+    new_chunks = (asio_riff_chunk_t **)
+                 realloc(file->chunks,
+                         new_chunk_count*sizeof(asio_riff_chunk_t *));
+    if (NULL == new_chunks)
+    {
+        ASC_DEBUG("out of memory when resizing chunk array");
+        goto error;
+    }
+
+    new_chunks[new_chunk_count - 1] = chunk;
+
+    file->chunks = new_chunks;
+    file->chunk_count = new_chunk_count;
+    asio_riff_file_recalculate_data_size(file);
+
+    return ASIO_STATUS_SUCCESS;
+
+error:
+    return ASIO_STATUS_ERROR;
+}
+
 asio_riff_chunk_t *asio_riff_chunk_init()
 {
     asio_riff_chunk_t *chunk;
@@ -377,6 +417,23 @@ void asio_riff_chunk_free(asio_riff_chunk_t *chunk)
 
     free(chunk);
     ASC_DEBUG("freed RIFF chunk at %p", (void *) chunk);
+}
+
+int asio_riff_chunk_is_empty(asio_riff_chunk_t *chunk)
+{
+    if (NULL == chunk)
+        return 0;
+
+    if (ASIO_FOURCC_NULL != chunk->type)
+        return 0;
+
+    if (0 != chunk->data_size)
+        return 0;
+
+    if (NULL != chunk->data)
+        return 0;
+
+    return 1;
 }
 
 char *asio_fourcc_to_ascii(uint32_t fourcc)
@@ -688,4 +745,23 @@ size_t asio_riff_file_chunks_write(asio_riff_file_t *file, FILE *output_file)
 
 error:
     return chunk_size_written;
+}
+
+void asio_riff_file_recalculate_data_size(asio_riff_file_t *file)
+{
+    uint32_t data_size;
+    int i;
+
+    if (NULL == file)
+        return;
+
+    data_size = sizeof(file->file_type);
+
+    for (i = 0; i < file->chunk_count; i++)
+        data_size += sizeof(file->chunks[i]->type) +
+                     sizeof(file->chunks[i]->data_size) +
+                     file->chunks[i]->data_size;
+
+    file->file_size = data_size;
+    ASC_DEBUG("reset file size of file at %p to %u", file, file->file_size);
 }

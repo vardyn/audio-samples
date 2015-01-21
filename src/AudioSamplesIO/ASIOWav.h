@@ -13,11 +13,13 @@
 #define ASIO_FOURCC_WAVE 0x45564157
 #define ASIO_FOURCC_FMT  0x20746d66
 #define ASIO_FOURCC_SMPL 0x6c706d73
+#define ASIO_FOURCC_INST 0x74736e69
 
 typedef struct asio_wav_fmt_s asio_wav_fmt_t;
 typedef struct asio_wav_fmt_ext_s asio_wav_fmt_ext_t;
 typedef struct asio_wav_smpl_s asio_wav_smpl_t;
 typedef struct asio_wav_smpl_loop_s asio_wav_smpl_loop_t;
+typedef struct asio_wav_inst_s asio_wav_inst_t;
 
 struct asio_wav_fmt_s {
     uint16_t format_tag;
@@ -62,6 +64,16 @@ struct asio_wav_smpl_loop_s {
     uint32_t play_count;
 };
 
+struct asio_wav_inst_s {
+    uint8_t root_note;
+    int8_t fine_tune;
+    int8_t gain;
+    uint8_t low_note;
+    uint8_t high_note;
+    uint8_t low_velocity;
+    uint8_t high_velocity;
+};
+
 asio_wav_fmt_t *asio_wav_fmt_init();
 void asio_wav_fmt_free(asio_wav_fmt_t *);
 int asio_wav_fmt_unpack(asio_wav_fmt_t *, asio_riff_chunk_t *);
@@ -73,6 +85,11 @@ int asio_wav_fmt_ext_unpack(asio_wav_fmt_ext_t *, asio_wav_fmt_t *);
 asio_wav_smpl_t *asio_wav_smpl_init();
 void asio_wav_smpl_free(asio_wav_smpl_t *);
 int asio_wav_smpl_unpack(asio_wav_smpl_t *, asio_riff_chunk_t *);
+
+asio_wav_inst_t *asio_wav_inst_init();
+void asio_wav_inst_free(asio_wav_inst_t *);
+int asio_wav_inst_unpack(asio_wav_inst_t *, asio_riff_chunk_t *);
+int asio_wav_inst_pack(asio_wav_inst_t *, asio_riff_chunk_t *);
 
 /*
  * WAVE codec format tags

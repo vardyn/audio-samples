@@ -200,7 +200,7 @@ asio_wav_smpl_t *asio_wav_smpl_init()
         return NULL;
     }
 
-    ASC_DEBUG("allocated smpl at %p");
+    ASC_DEBUG("allocated smpl at %p", smpl);
 
     return smpl;
 }
@@ -338,6 +338,133 @@ int asio_wav_smpl_unpack(asio_wav_smpl_t *smpl, asio_riff_chunk_t *chunk)
 error_free_sample_loops:
     if (NULL != smpl->sample_loops)
         free(smpl->sample_loops);
+error:
+    return ASIO_STATUS_ERROR;
+}
+
+asio_wav_inst_t *asio_wav_inst_init()
+{
+    asio_wav_inst_t *inst;
+
+    inst = (asio_wav_inst_t *) calloc(1, sizeof(asio_wav_inst_t));
+    if (NULL == inst)
+    {
+        ASC_ERROR("out of memory when allocating WAV inst");
+        return NULL;
+    }
+
+    ASC_DEBUG("allocated WAV inst at %p", inst);
+
+    return inst;
+}
+
+void asio_wav_inst_free(asio_wav_inst_t *inst)
+{
+    free(inst);
+    ASC_DEBUG("freed WAV inst at %p", inst);
+}
+
+int asio_wav_inst_unpack(asio_wav_inst_t *inst, asio_riff_chunk_t *chunk)
+{
+    if (NULL == chunk)
+    {
+        ASC_ERROR("chunk must not be null");
+        goto error;
+    }
+
+    if (ASIO_FOURCC_INST != chunk->type)
+    {
+        ASC_ERROR("incorrect chunk type %#010x found", chunk->type);
+        goto error;
+    }
+
+    if (7 != chunk->data_size)
+    {
+        ASC_ERROR("WAV inst chunk data size must be 7 bytes");
+        goto error;
+    }
+
+    if (NULL == chunk->data)
+    {
+        ASC_ERROR("chunk data must not be NULL");
+        goto error;
+    }
+
+    if (NULL == inst)
+    {
+        ASC_ERROR("inst must not be null");
+        goto error;
+    }
+
+    inst->root_note = *((uint8_t *) chunk->data);
+    ASC_DEBUG("read WAV inst root note %03u", inst->root_note);
+    inst->fine_tune = *((int8_t *) (chunk->data + 1));
+    ASC_DEBUG("read WAV inst fine tune %+03d", inst->fine_tune);
+    inst->gain = *((int8_t *) (chunk->data + 2));
+    ASC_DEBUG("read WAV inst gain %+03d", inst->gain);
+    inst->low_note = *((uint8_t *) (chunk->data + 3));
+    ASC_DEBUG("read WAV inst low note %03u", inst->low_note);
+    inst->high_note = *((uint8_t *) (chunk->data + 4));
+    ASC_DEBUG("read WAV inst high note %03u", inst->high_note);
+    inst->low_velocity = *((uint8_t *) (chunk->data + 5));
+    ASC_DEBUG("read WAV inst low velocity %03u", inst->low_velocity);
+    inst->high_velocity = *((uint8_t *) (chunk->data + 6));
+    ASC_DEBUG("read WAV inst high velocity %03u", inst->high_velocity);
+
+    return ASIO_STATUS_SUCCESS;
+
+error:
+    return ASIO_STATUS_ERROR;
+}
+
+int asio_wav_inst_pack(asio_wav_inst_t *inst, asio_riff_chunk_t *chunk)
+{
+    if (NULL == chunk)
+    {
+        ASC_ERROR("chunk must not be null");
+        goto error;
+    }
+
+    if (!asio_riff_chunk_is_empty(chunk))
+    {
+        ASC_ERROR("chunk must be empty");
+        goto error;
+    }
+
+    if (NULL == inst)
+    {
+        ASC_ERROR("inst must not be null");
+        goto error;
+    }
+
+    chunk->type = ASIO_FOURCC_INST;
+
+    chunk->data = calloc(1, 7);
+    if (NULL == chunk->data)
+    {
+        ASC_ERROR("out of memory when allocating chunk data for WAV inst");
+        goto error;
+    }
+
+    chunk->data_size = 7;
+
+    *((uint8_t *) chunk->data) = inst->root_note;
+    ASC_DEBUG("wrote WAV inst root note %03u to chunk", inst->root_note);
+    *((int8_t *) (chunk->data + 1)) = inst->fine_tune;
+    ASC_DEBUG("wrote WAV inst fine tune %+03d to chunk", inst->fine_tune);
+    *((int8_t *) (chunk->data + 2)) = inst->gain;
+    ASC_DEBUG("wrote WAV inst gain %+03d to chunk", inst->gain);
+    *((uint8_t *) (chunk->data + 3)) = inst->low_note;
+    ASC_DEBUG("wrote WAV inst low note %03u to chunk", inst->low_note);
+    *((uint8_t *) (chunk->data + 4)) = inst->high_note;
+    ASC_DEBUG("wrote WAV inst high note %03u to chunk", inst->high_note);
+    *((uint8_t *) (chunk->data + 5)) = inst->low_velocity;
+    ASC_DEBUG("wrote WAV inst low velocity %03u to chunk", inst->low_velocity);
+    *((uint8_t *) (chunk->data + 6)) = inst->high_velocity;
+    ASC_DEBUG("wrote WAV inst high velocity %03u to chunk", inst->high_velocity);
+
+    return ASIO_STATUS_SUCCESS;
+
 error:
     return ASIO_STATUS_ERROR;
 }
