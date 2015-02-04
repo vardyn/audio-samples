@@ -17,3 +17,9 @@ target_link_libraries(simple_kick AudioSamplesCore
                                   AudioSamplesIO
                                   ${LIBAO_LIBRARY}
                                   ${M_LIB})
+
+add_executable(prbs13 prbs13.c)
+target_link_libraries(prbs13 AudioSamplesCore
+                             AudioSamplesIO
+                             ${LIBAO_LIBRARY}
+                             ${M_LIB})
